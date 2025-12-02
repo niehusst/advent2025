@@ -1,5 +1,6 @@
-# advent2023
-Advent of code until i fall asleep
+# advent2025
+
+Maybe now that there are fewer puzzles I'll be able to finish???
 
 ### Script to download input explanation in case reddit croaks
 
