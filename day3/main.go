@@ -6,8 +6,6 @@ import (
 	"log"
 	"strings"
 	"strconv"
-	"sort"
-	"container/heap"
 )
 
 /*
@@ -59,77 +57,34 @@ part 2
 
 .. heap-like data structure that store n largest values, and pops them out in insertion order
 ^ this doesn't work because we would rather have a higher first number at the expense of including a lesser later one
+
+largest subseqence len 12
 */
 
 
-type Battery struct {
-	jolts    string // main comparison value
-	priority int    // The index in original battery bank
-	// The index is needed by update and is maintained by the heap.Interface methods.
-	index int // The index of the item in the heap.
-}
-
-// A PriorityQueue implements heap.Interface and holds Items.
-type PriorityQueue []*Battery
-
-func (pq PriorityQueue) Len() int { return len(pq) }
-
-func (pq PriorityQueue) Less(i, j int) bool {
-	return pq[i].jolts < pq[j].jolts
-}
-
-func (pq PriorityQueue) Swap(i, j int) {
-	pq[i], pq[j] = pq[j], pq[i]
-	pq[i].index = i
-	pq[j].index = j
-}
-
-func (pq *PriorityQueue) Push(x any) {
-	n := len(*pq)
-	item := x.(*Battery)
-	item.index = n
-	*pq = append(*pq, item)
-}
-
-func (pq *PriorityQueue) Pop() any {
-	old := *pq
-	n := len(old)
-	item := old[n-1]
-	old[n-1] = nil  // don't stop the GC from reclaiming the item eventually
-	item.index = -1 // for safety
-	*pq = old[0 : n-1]
-	return item
-}
-
-// update modifies the priority and value of an Item in the queue.
-func (pq *PriorityQueue) update(item *Battery, jolts string, priority int) {
-	item.jolts = jolts
-	item.priority = priority
-	heap.Fix(pq, item.index)
-}
-
-
-
 func getJoltage(bank string, numBats int) int {
-	pq := make(PriorityQueue, 0)
+	bats := make([]byte, numBats)
+	start := 0
 
-	for i := 0; i < len(bank); i++ {
-		heap.Push(&pq, &Battery{jolts: string(bank[i]), priority: i})
-		if len(pq) > numBats {
-			heap.Pop(&pq)
+	for bat := 0; bat < len(bats); bat++ {
+		maxVal := byte('0')
+		idx := -1
+		// find max battery in allowed range
+		for i := start; i < len(bank) - (len(bats) - (1+bat)); i++ {
+			if bank[i] > maxVal {
+				idx = i
+				maxVal = bank[i]
+			}
 		}
+
+		// reset start
+		start = idx + 1
+
+		// set the max value in bats
+		bats[bat] = maxVal
 	}
 
-	sort.Slice(pq, func (i, j int) bool {
-		return pq[i].priority < pq[j].priority
-	})
-
-	bats := make([]string, numBats)
-	for i, bat := range pq {
-		bats[i] = bat.jolts
-	}
-
-	joltage, err := strconv.Atoi(strings.Join(bats,""))
+	joltage, err := strconv.Atoi(string(bats))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -142,7 +97,7 @@ func part2(data string) {
 
 	for _, bank := range banks {
 		joltage := getJoltage(bank, 12)
-		fmt.Println(bank, joltage)
+		//fmt.Println(bank, joltage)
 		combinedJoltage += joltage
 	}
 
@@ -150,7 +105,7 @@ func part2(data string) {
 }
 
 func main() {
-	bytes, err := ioutil.ReadFile("test.txt")
+	bytes, err := ioutil.ReadFile("input.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
