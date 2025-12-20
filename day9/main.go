@@ -6,6 +6,7 @@ import (
 	"log"
 	"strings"
 	"strconv"
+	"sort"
 	"math"
 )
 
@@ -187,19 +188,30 @@ func part2(coords [][2]int) {
 		
 	}
 
-	// iter all rects & check perim
+	// sort all possible pairs by area hi->lo so we dont have to check all to find max
+	rectPairs := make([][2][2]int, 0)
+	for i := 0; i < len(coords); i++ {
+		for j := i+1; j < len(coords); j++ {
+			rectPairs = append(rectPairs, [2][2]int{coords[i], coords[j]})
+		}
+	}
+	sort.Slice(rectPairs, func (i,j int) bool {
+		return area(rectPairs[i][0], rectPairs[i][1]) > area(rectPairs[j][0], rectPairs[j][1])
+	})
+
+	// iter & check perim until first valid
 	maxArea := 0
 	minp := [2]int{minx,miny}
 	maxp := [2]int{maxx,maxy}
-	//fmt.Println(edges)
-	//fmt.Println(pointInbound([2]int{2,2},minp,maxp,edges))
-	for i := 0; i < len(coords); i++ {
-		for j := i+1; j < len(coords); j++ {
-			rectArea := area(coords[i], coords[j])
-			if perimeterInbound(coords[i], coords[j], minp, maxp, edges) && rectArea > maxArea {
-				maxArea = rectArea
-			}
+	for i, pair := range rectPairs {
+		c1 := pair[0]
+		c2 := pair[1]
+		if perimeterInbound(c1, c2, minp, maxp, edges) {
+			maxArea = area(c1, c2)
+			break
 		}
+
+		fmt.Printf("%d/%d\n", i, len(rectPairs))
 	}
 
 	fmt.Println("max contained area", maxArea)
